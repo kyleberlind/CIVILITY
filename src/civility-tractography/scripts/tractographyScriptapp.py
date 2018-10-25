@@ -6,15 +6,13 @@ import os
 import sys 
 import shutil
 import subprocess
-
+import writeSeedList as wsl
+from collections import namedtuple
 
 
 #Parameters
 
-# python tractographyScriptApp.py neo-0188-1-4years neo-0188-1-4year_42_DWI_QCed_VC_up1mm.nrrd 
-# neo-0188-1-4year-T1_SkullStripped_scaled_DWISpace_up1mm.nrrd DWI_Space_Mask_up1mm.nrrd 
-# TABLE_AAL.json stx_neo-0188-1-4year-T1_CombinedSurface_white_AAL.vtk stx_neo-0188-1-4year-T1_CombinedSurface_white_AAL.vtk 
-# colour false "set labelID" true true "-n 2" "-P 3000 --steplength=0.75 --sampvox=0.5"
+# python tractographyScriptApp.py neo-0188-1-4years neo-0188-1-4year_42_DWI_QCed_VC_up1mm.nrrd neo-0188-1-4year-T1_SkullStripped_scaled_DWISpace_up1mm.nrrd DWI_Space_Mask_up1mm.nrrd TABLE_AAL.json stx_neo-0188-1-4year-T1_CombinedSurface_white_AAL.vtk stx_neo-0188-1-4year-T1_CombinedSurface_white_AAL.vtk colour false "set labelID" true true "-n 2" "-P 3000 --steplength=0.75 --sampvox=0.5"
 
 # print("kyle's test run")
 # print("SUBJECT = neo-0188-1-4years")
@@ -33,24 +31,7 @@ import subprocess
 # print("probtrackParam = -P 3000 --steplength=0.75 --sampvox=0.5")
 # print("DWIConvert = ")
 
-parser = argparse.ArgumentParser(description='HERE PUT DESCRIPTION AND LINK GITHUB')
 
-parser.add_argument("--SUBJECT", help = "subject data. ex: neo-0029-1-1year", type = str) # SUBJECT=$1  #ex : neo-0029-1-1year
-parser.add_argument("--DWI", help = "DWI data", type = str)# DWI=$2
-parser.add_argument("--T1", help = "T1 weighted image", type = str)# T1=$3
-parser.add_argument("--BRAINMASK", help = "brain mask", type = str)# BRAINMASK=$4
-parser.add_argument("--PARCELLATION_TABLE", type = str)# PARCELLATION_TABLE=$5
-parser.add_argument("--SURFACE", help = "surface", type = str)# SURFACE=$6
-parser.add_argument("--EXTRA_SURFACE_COLOR", help = "extra surface color", type = str)# EXTRA_SURFACE_COLOR=$7
-parser.add_argument("--labelSetName", help = "label set name",type = str)# labelSetName=$8
-parser.add_argument("--ignoreLabel", help = "ignore label?", type = bool)# ignoreLabel=$9
-parser.add_argument("--ignoreLabelID", help = "ignore label ID?", type = str) # ignoreLabelID=${10}
-parser.add_argument("--overlapping", help = "overlapping", type = bool)# overlapping=${11}
-parser.add_argument("--loopcheck", help = "loop check", type = bool)# loopcheck=${12}
-parser.add_argument("--bedpostxParam", help = "bedpostxParam", type = str)# bedpostxParam=${13}
-parser.add_argument("--probtrackParam", help = 'probtrackParam', type = str)# probtrackParam=${14}
-parser.add_argument("--DWIConvert", help = "DWI Convert", default = None, type = str)#DWIConvert=/Applications/Slicer.app/Contents/lib/Slicer-4.8/cli-modules/DWIConvert#??? what is this pathway???
-args = parser.parse_args()
 
 # print(args.accumulate(args.integers))
 
@@ -207,6 +188,11 @@ def tractscript(args):
     out, err = WriteSeedList.communicate()
     print("WriteSeedList out: ", out) #is this correct
     print("WriteSeedList err: ", err)
+    
+    wsl_obj = {}
+    wsl_obj["param1"] = args.DWI
+    wsl_args = namedtuple("wsl", wsl_obj.keys())(*slice_obj.values())
+    wsl.writeSeedList(wsl_args)
 
     if os.path.exists(os.path.join(args.SUBJECT, "seeds.txt")):#if [ ! -e  ${SUBJECT}/seeds.txt ]; then
         print("ERROR_PIPELINE_PROBTRACKBRAINCONNECTIVITY", file=sys.stderr)
@@ -271,10 +257,28 @@ def tractscript(args):
     else:
         print("Output of probtrackx2 not here - error during the pipeline")
     print("Pipeline done!")
-    
 
     
-    
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='HERE PUT DESCRIPTION AND LINK GITHUB')
+
+    parser.add_argument("--SUBJECT", help = "subject data. ex: neo-0029-1-1year", type = str) # SUBJECT=$1  #ex : neo-0029-1-1year
+    parser.add_argument("--DWI", help = "DWI data", type = str)# DWI=$2
+    parser.add_argument("--T1", help = "T1 weighted image", type = str)# T1=$3
+    parser.add_argument("--BRAINMASK", help = "brain mask", type = str)# BRAINMASK=$4
+    parser.add_argument("--PARCELLATION_TABLE", type = str)# PARCELLATION_TABLE=$5
+    parser.add_argument("--SURFACE", help = "surface", type = str)# SURFACE=$6
+    parser.add_argument("--EXTRA_SURFACE_COLOR", help = "extra surface color", type = str)# EXTRA_SURFACE_COLOR=$7
+    parser.add_argument("--labelSetName", help = "label set name",type = str)# labelSetName=$8
+    parser.add_argument("--ignoreLabel", help = "ignore label?", type = bool)# ignoreLabel=$9
+    parser.add_argument("--ignoreLabelID", help = "ignore label ID?", type = str) # ignoreLabelID=${10}
+    parser.add_argument("--overlapping", help = "overlapping", type = bool)# overlapping=${11}
+    parser.add_argument("--loopcheck", help = "loop check", type = bool)# loopcheck=${12}
+    parser.add_argument("--bedpostxParam", help = "bedpostxParam", type = str)# bedpostxParam=${13}
+    parser.add_argument("--probtrackParam", help = 'probtrackParam', type = str)# probtrackParam=${14}
+    parser.add_argument("--DWIConvert", help = "DWI Convert", default = None, type = str)#DWIConvert=/Applications/Slicer.app/Contents/lib/Slicer-4.8/cli-modules/DWIConvert#??? what is this pathway???
+    args = parser.parse_args()
+    
     tractscript(args)
+    
 
