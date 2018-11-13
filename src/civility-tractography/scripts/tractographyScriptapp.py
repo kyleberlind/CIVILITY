@@ -8,36 +8,13 @@ import shutil
 import subprocess
 import writeSeedList as wsl
 from collections import namedtuple
+import numpy
 
 
-#Parameters
-
-# python tractographyScriptApp.py neo-0188-1-4years neo-0188-1-4year_42_DWI_QCed_VC_up1mm.nrrd neo-0188-1-4year-T1_SkullStripped_scaled_DWISpace_up1mm.nrrd DWI_Space_Mask_up1mm.nrrd TABLE_AAL.json stx_neo-0188-1-4year-T1_CombinedSurface_white_AAL.vtk stx_neo-0188-1-4year-T1_CombinedSurface_white_AAL.vtk colour false "set labelID" true true "-n 2" "-P 3000 --steplength=0.75 --sampvox=0.5"
-
-# print("kyle's test run")
-# print("SUBJECT = neo-0188-1-4years")
-# print("DWI = neo-0188-1-4year_42_DWI_QCed_VC_up1mm.nrrd ")
-# print("T1 = neo-0188-1-4year-T1_SkullStripped_scaled_DWISpace_up1mm.nrrd ") 
-# print("BRAINMASK = DWI_Space_Mask_up1mm.nrrd") 
-# print("PARCELLATION_TABLE = TABLE_AAL.json")
-# print("SURFACE = stx_neo-0188-1-4year-T1_CombinedSurface_white_AAL.vtk")
-# print("EXTRA_SURFACE_COLOR = stx_neo-0188-1-4year-T1_CombinedSurface_white_AAL.vtk ")
-# print("labelSetName = colour")
-# print("ignoreLabel = false") 
-# print("ignoreLabelID = set labelID") 
-# print("overlapping = true")
-# print("loopcheck = true") 
-# print("bedpostxParam = -n 2")
-# print("probtrackParam = -P 3000 --steplength=0.75 --sampvox=0.5")
-# print("DWIConvert = ")
-
-
-
-# print(args.accumulate(args.integers))
 
 
 def which(name):
-    for path in os.getenv("PATH").split(os.path.pathsep):# getenv are a whole bunch of path parameters; os.path.pathstep is a universal way of saying path separater like a colon
+    for path in os.getenv("PATH").split(os.path.pathsep):
         full_path = os.path.join(path,name)
         if os.path.exists(full_path):
             return full_path
@@ -190,8 +167,16 @@ def tractscript(args):
     print("WriteSeedList err: ", err)
     
     wsl_obj = {}
-    wsl_obj["param1"] = args.DWI
+    wsl_obj["param1"] = args.SUBJECT
+    wsl_obj["param2"] = overlapName
+    wsl_obj["param3"] = args.PARCELLATION_TABLE
+    wsl_obj["param4"] = number_ROIS
+    
+    
     wsl_args = namedtuple("wsl", wsl_obj.keys())(*slice_obj.values())
+   
+    print("wsl_args: ", wsl_args)
+    
     wsl.writeSeedList(wsl_args)
 
     if os.path.exists(os.path.join(args.SUBJECT, "seeds.txt")):#if [ ! -e  ${SUBJECT}/seeds.txt ]; then
