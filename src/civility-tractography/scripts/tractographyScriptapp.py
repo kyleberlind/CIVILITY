@@ -11,6 +11,9 @@ from collections import namedtuple
 
 
 def which(name):
+    """ checks if path to name exists in environment. Returns the 
+    path is if does exist, returns None if it doesn't exist"""
+    
     for path in os.getenv("PATH").split(os.path.pathsep):
         full_path = os.path.join(path,name)
         if os.path.exists(full_path):
@@ -21,10 +24,14 @@ def which(name):
 
 def tractscript(args):
     
+    """full Tractography pipline. Takes in arguments passed via the terminal and
+    outputs an ftd_network_matrix which can be visualized as a heirarchical 
+    edge bundle. Uses bedpostX (FSL), ExtractLabelSurfaces, 
+    writeSeedList.py and probtrackx2 (FSL) to build the matrix.
+    """
     current_directory = os.getcwd() # $var=pwd
-    
+
     #DO TRACTOGRAPHY SCRIPT 
-    
     DWIConvert= args.DWIConvert
     if DWIConvert is None: #what is the difference between and empty string and None 
         DWIConvert = which("DWIConvert")
@@ -58,12 +65,13 @@ def tractscript(args):
     
     #Create subject DIR 
     if not os.path.exists(args.SUBJECT):
-        os.mkdir(args.SUBJECT + "test")
+        os.mkdir(args.SUBJECT)
         print("Subject directory already created")#mkdir $SUBJECT
     #Copy JSON table in subject DIR 
     TABLE_name = os.path.basename(args.PARCELLATION_TABLE) #TABLE_name=$(basename ${PARCELLATION_TABLE})
-    NEWPARCELLATION_TABLE = os.path.join(current_directory, args.SUBJECT + "test" ,TABLE_name)#NEWPARCELLATION_TABLE=$var/$SUBJECT/${TABLE_name}
-    shutil.copyfile(args.PARCELLATION_TABLE, NEWPARCELLATION_TABLE) #cp ${PARCELLATION_TABLE} ${NEWPARCELLATION_TABLE}
+    if not os.path.exists(os.path.join(current_directory, args.SUBJECT, TABLE_name)):
+        NEWPARCELLATION_TABLE = os.path.join(current_directory, args.SUBJECT, TABLE_name)#NEWPARCELLATION_TABLE=$var/$SUBJECT/${TABLE_name}
+        shutil.copyfile(args.PARCELLATION_TABLE, NEWPARCELLATION_TABLE) #cp ${PARCELLATION_TABLE} ${NEWPARCELLATION_TABLE}
     
     #Create Diffusion data for bedpostx 
     print("Create Diffusion data ...")
@@ -80,6 +88,7 @@ def tractscript(args):
         print("DWIConvert : nodif_brain_mask.nii.gz")
         arguments = [DWIConvert,"--inputVolume", args.BRAINMASK, "--conversionMode", "NrrdToFSL", "--outputVolume", DiffusionBrainMask, "--outputBVectors", os.path.join(args.SUBJECT, "Diffusion", "bvecs.nodif"), "--outputBValues", os.path.join(args.SUBJECT, "Diffusion", "bvals.temp")]
         #DWIConvert --inputVolume ${BRAINMASK} --conversionMode NrrdToFSL --outputVolume ${DiffusionBrainMask} --outputBVectors ${SUBJECT}/Diffusion/bvecs.nodif --outputBValues ${SUBJECT}/Diffusion/bvals.temp
+        
         DWIConvertBRAINMASK = subprocess.Popen(arguments, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         out, err = DWIConvertBRAINMASK.communicate()
         print("DWIConvertBRAINMASK out: ", out) #is this correct
@@ -155,13 +164,13 @@ def tractscript(args):
     
     os.chdir(current_directory)#cd $var 
     #Write seed list 
-    os.remove(os.path.join(args.SUBJECT, "seeds.txt"))#rm ${SUBJECT}/seeds.txt
-    arguments = ["python", os.path.join("nas02","home","j","p", "jprieto", "tools", "writeSeedList.py"), args.SUBJECT, overlapName, NEWPARCELLATION_TABLE, number_ROIS]
-    #python /nas02/home/j/p/jprieto/tools/writeSeedList.py ${SUBJECT} ${overlapName} ${NEWPARCELLATION_TABLE} ${number_ROIS}
-    WriteSeedList = subprocess.Popen(arguments, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    out, err = WriteSeedList.communicate()
-    print("WriteSeedList out: ", out) #is this correct
-    print("WriteSeedList err: ", err)
+#     os.remove(os.path.join(args.SUBJECT, "seeds.txt"))#rm ${SUBJECT}/seeds.txt
+#     arguments = ["python", os.path.join("nas02","home","j","p", "jprieto", "tools", "writeSeedList.py"), args.SUBJECT, overlapName, NEWPARCELLATION_TABLE, number_ROIS]
+#     #python /nas02/home/j/p/jprieto/tools/writeSeedList.py ${SUBJECT} ${overlapName} ${NEWPARCELLATION_TABLE} ${number_ROIS}
+#     WriteSeedList = subprocess.Popen(arguments, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+#     out, err = WriteSeedList.communicate()
+#     print("WriteSeedList out: ", out) 
+#     print("WriteSeedList err: ", err)
     
     wsl_obj = {}
     wsl_obj["param1"] = args.SUBJECT
@@ -171,7 +180,7 @@ def tractscript(args):
     
     wsl_args = namedtuple("wsl", wsl_obj.keys())(*slice_obj.values())
    
-    print("wsl_args: ", wsl_args)
+    print("wsl_args: ??????????????????????????????????????????", wsl_args)
     
     wsl.writeSeedList(wsl_args)
 
@@ -241,12 +250,12 @@ def tractscript(args):
 
     
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description= """The analysis of the brain connectome is computed by a probabilistic method (FSL tools) using surfaces as seeds. 
+    parser = argparse.ArgumentParser(description= """Tractography pipeline analysis of the brain connectome computed by a probabilistic method (FSL tools) using surfaces as seeds. 
                                                     The main steps of the pipeline are : 
                                                     
                                                     bedpostX (FSL): Fitting of the probabilistic diffusion model on corrected data (by default number of tensors = 2)
                                                     
-                                                    ExtractLabelSurfaces : creation label surfaces (ASCII files) from a VTK surface containing labels information.
+                                                    ExtractLabelSurfaces: creation label surfaces (ASCII files) from a VTK surface containing labels information.
                                                     (https://github.com/NIRALUser/ExtractLabelSurfaces)
                                                     
                                                     Creation of a seeds list : text file listing all path of label surfaces created by ExtractLabelSurfaces tool
