@@ -8,9 +8,6 @@ import shutil
 import subprocess
 import writeSeedList as wsl
 from collections import namedtuple
-import numpy
-
-
 
 
 def which(name):
@@ -172,7 +169,6 @@ def tractscript(args):
     wsl_obj["param3"] = args.PARCELLATION_TABLE
     wsl_obj["param4"] = number_ROIS
     
-    
     wsl_args = namedtuple("wsl", wsl_obj.keys())(*slice_obj.values())
    
     print("wsl_args: ", wsl_args)
@@ -245,14 +241,26 @@ def tractscript(args):
 
     
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='HERE PUT DESCRIPTION AND LINK GITHUB')
+    parser = argparse.ArgumentParser(description= """The analysis of the brain connectome is computed by a probabilistic method (FSL tools) using surfaces as seeds. 
+                                                    The main steps of the pipeline are : 
+                                                    
+                                                    bedpostX (FSL): Fitting of the probabilistic diffusion model on corrected data (by default number of tensors = 2)
+                                                    
+                                                    ExtractLabelSurfaces : creation label surfaces (ASCII files) from a VTK surface containing labels information.
+                                                    (https://github.com/NIRALUser/ExtractLabelSurfaces)
+                                                    
+                                                    Creation of a seeds list : text file listing all path of label surfaces created by ExtractLabelSurfaces tool
+                                                    
+                                                    probtrackx2 (FSL): compute tractography according to the seeds list created.
+                                                    
+                                                    Link to github: https://github.com/NIRALUser/CIVILITY""")
 
     parser.add_argument("--SUBJECT", help = "subject data. ex: neo-0029-1-1year", type = str) # SUBJECT=$1  #ex : neo-0029-1-1year
-    parser.add_argument("--DWI", help = "DWI data", type = str)# DWI=$2
-    parser.add_argument("--T1", help = "T1 weighted image", type = str)# T1=$3
-    parser.add_argument("--BRAINMASK", help = "brain mask", type = str)# BRAINMASK=$4
-    parser.add_argument("--PARCELLATION_TABLE", type = str)# PARCELLATION_TABLE=$5
-    parser.add_argument("--SURFACE", help = "surface", type = str)# SURFACE=$6
+    parser.add_argument("--DWI", help = "DWI image (in diffusion space, nrrd format)", type = str)# DWI=$2
+    parser.add_argument("--T1", help = "T1 image (in diffusion space, nrrd format)", type = str)# T1=$3
+    parser.add_argument("--BRAINMASK", help = "Brain mask (in diffusion space, nrrd format)", type = str)# BRAINMASK=$4
+    parser.add_argument("--PARCELLATION_TABLE", help = "Parcellation table, json file which describes the brain atlas in brain surfaces (format json)", type = str)# PARCELLATION_TABLE=$5
+    parser.add_argument("--SURFACE", help = "VTK file which represents the white matter surface in the diffusion space", type = str)# SURFACE=$6
     parser.add_argument("--EXTRA_SURFACE_COLOR", help = "extra surface color", type = str)# EXTRA_SURFACE_COLOR=$7
     parser.add_argument("--labelSetName", help = "label set name",type = str)# labelSetName=$8
     parser.add_argument("--ignoreLabel", help = "ignore label?", type = bool)# ignoreLabel=$9
