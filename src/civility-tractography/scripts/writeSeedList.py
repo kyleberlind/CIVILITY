@@ -3,15 +3,13 @@ import json
 import numpy as np
 from pprint import pprint
 from sys import argv
-# add arg parse.
-
 
 def writeSeedList(args):
     #args : SUBJECT_DIR, ${overlapFlag}, JSONTABLE filename, number_ROIS
-    subject_dir = argv[1] 
-    overlapName = argv[2] 
-    jsonFile = argv[3] 
-    nb_ROIS = argv[4]
+    subject_dir = args.SUBJECT
+    overlapName = args.overlapName
+    jsonFile = args.jsonFile 
+    nb_ROIS = args.nb_ROIS
     #need to create flags for the parameter
     
     DIR_Surfaces = subject_dir + '/OutputSurfaces' + overlapName + '/labelSurfaces/'
@@ -51,10 +49,13 @@ def writeSeedList(args):
     
     
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='HERE PUT DESCRIPTION AND LINK GITHUB')
+    
+    parser = argparse.ArgumentParser(description='Writes the SeedList for the tractography-pipeline')
 
-    parser.add_argument("--SUBJECT", help = "subject data. ex: neo-0029-1-1year", type = str) # SUBJECT=$1  #ex : neo-0029-1-1year
-    parser.add_argument("--DWI", help = "DWI data", type = str)# DWI=$2
-    parser.add_argument("--DWIConvert", help = "DWI Convert", default = None, type = str)#DWIConvert=/Applications/Slicer.app/Contents/lib/Slicer-4.8/cli-modules/DWIConvert#??? what is this pathway???
+    parser.add_argument("--SUBJECT", help = "subject data. ex: neo-0029-1-1year", type = str)
+    parser.add_argument("--overlapName", help = "overlapName", type = str)
+    parser.add_argument("--jsonFile", help = "jsonFile", type = str)
+    parser.add_argument("--nb_ROIS", help = "jsonFile", type = str)
+    
     args = parser.parse_args()
     writeSeedList(args)
